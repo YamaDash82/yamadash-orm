@@ -1,0 +1,6 @@
+/node_modules
+/build
+/memo
+#mssqlのコードはまだリリースしない
+/src/mssql_modules
+.env
