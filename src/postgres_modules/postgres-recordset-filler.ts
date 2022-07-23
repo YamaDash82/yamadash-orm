@@ -49,21 +49,14 @@ export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
             //https://node-postgres.com/api/pool
             //↑のpool.connectを参考にコーディングした。
             new Promise((resolve, reject) => {
-              this.pool.connect((err, client, release) => {
-                if (err) {
+              client.query(rst.source, (err, result) => {
+                if(err){
                   return reject(err);
                 }
-                  client.query(rst.source, (err, result) => {
-                  release();
 
-                  if (err) {
-                    return reject(err);
-                  }
-                  
-                  rst.records.push(...result.rows);
-                  
-                  return resolve();
-                });
+                rst.records.push(...result.rows);
+
+                return resolve();
               });
             })
           )  

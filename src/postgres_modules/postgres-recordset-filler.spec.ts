@@ -40,7 +40,7 @@ describe('RecordsetFillerのテスト', () => {
     const filler = new PostgresRecordsetFiller(pool, recordset);
 
     await filler.fill();
-
+    await pool.end();
     expect(recordset.records[0].user_name).toEqual(userName);
     expect(recordset.records[0].age).toEqual(age);
   });

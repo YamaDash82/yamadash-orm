@@ -14,11 +14,13 @@ describe('DefaultPoolクラスのテスト', () => {
     let disconnected = false;
 
     try {
-      await pool.connect();
+      //connectメソッド実行でclientが取得できる。
+      const client = await pool.connect();
       connected = true;
 
-      const data = await pool.query(`select 'taro' as name, 39 as age`);
-      console.log(`取得データ:${JSON.stringify(data.rows)}`);
+      //pool.end()前にclientの解放が必要である。
+      //これを実行しないと、pool.end()が完了しなかった。
+      client.release();
       
       await pool.end();
       disconnected = true;
@@ -28,5 +30,5 @@ describe('DefaultPoolクラスのテスト', () => {
 
     expect(connected).toEqual(true);
     expect(disconnected).toEqual(true);
-  }, 100000);
+  });
 });
