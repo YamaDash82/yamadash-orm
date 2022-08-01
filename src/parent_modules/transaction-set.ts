@@ -27,7 +27,7 @@ export class SQLCommand {
     return this._source;
   }
 
-  set state(state: SQLTransactionState) {
+  setState(state: SQLTransactionState) {
     this._state = state;
   }
 
@@ -43,3 +43,34 @@ export class SQLCommand {
     return this._error;
   }
 }
+
+/*
+//SQLCommandクラス
+//実行するSQLCOmmandを保持する。
+export class SQLCommand {
+  //コマンド実行状態
+  private _state: SQLTransactionState;
+  //エラー
+  private _error: Error | null;
+
+  constructor (public readonly source: string) {
+
+  }
+
+  setState(state: SQLTransactionState) {
+    this._state = state;
+  }
+
+  get state(): SQLTransactionState {
+    return this._state;
+  }
+
+  setError(error: Error) {
+    this._error = error;
+  }
+
+  get error(): Error | null {
+    return this._error;
+  }
+}
+*/
