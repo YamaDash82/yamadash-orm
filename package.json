@@ -9,6 +9,7 @@
   "repository": {
     "type": "git"
   },
+  "private": true, 
   "scripts": {
     "test": "jest --watchAll -w=1",
     "build": "tsc",

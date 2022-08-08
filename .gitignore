@@ -4,3 +4,4 @@
 #mssqlのコードはまだリリースしない
 /src/mssql_modules
 .env
+README.md

@@ -103,5 +103,8 @@
     "outDir": "./build",
     "rootDir": "./src" 
   }, 
-  "include": ["src"]
+  "include": ["src"], 
+  "exclude": [
+    "**/*.spec.ts"
+  ]
 }

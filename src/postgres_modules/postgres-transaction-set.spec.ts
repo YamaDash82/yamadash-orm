@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import { PostgresTransactionSet } from './postgres-transaction-set';
 import { SQLCommand, SQLTransactionState, SQL_TRANSACTION_STATE } from '../parent_modules/transaction-set';
 import { DefaultPool } from './default-pool';
+import { PostgresConnection } from './postgres-connection';
 
 describe('PostgresTransactionSetのテスト', () =>{
   //接続先dbにusersというテーブルがあるものとしてテスト。
@@ -88,8 +89,8 @@ describe('PostgresTransactionSetのテスト', () =>{
   });
 
   it('clientを外部から渡す場合のテスト:正常', async () => {
-    const pool = new DefaultPool();
-    const client = await pool.connect();
+    const conn = new PostgresConnection();
+    await conn.connect();
 
     const commands: SQLCommand[] = [
       new SQLCommand(`insert into users (id, username) values (10, '山田　太郎')`), 
@@ -97,21 +98,20 @@ describe('PostgresTransactionSetのテスト', () =>{
     ];
 
     //transactionSet内ではトランザクションを制御しないので第3引数はfalseを設定する。
-    const transactionSet = new PostgresTransactionSet(client, commands, false);
+    const transactionSet = new PostgresTransactionSet(conn, commands, false);
 
     let result = false;
 
     //トランザクション開始
-    await client.query('BEGIN');
+    await conn.beginTransaction();
     
     result = await transactionSet.execute();
     
     //コミット
-    await client.query('COMMIT');
+    await conn.commitTransaction();
     
     //後処理
-    client.release();
-    pool.end();
+    conn.end();
 +
     expect(result).toBe(true);
   });
@@ -123,29 +123,33 @@ describe('PostgresTransactionSetのテスト', () =>{
       new SQLCommand(`delete from users wher id = 10`)
     ];
     
-    const pool = new DefaultPool();
-
-    const client = await pool.connect();
+    const conn = new PostgresConnection();
+    await conn.connect();
 
     await expect(async () => {
-      await client.query('BEGIN');
+      await conn.beginTransaction();
 
-      const transactionSet = new PostgresTransactionSet(client, commands, false);
+      const transactionSet = new PostgresTransactionSet(conn, commands, false);
 
       try {
         const result = await  transactionSet.execute();
 
         if(result){
-          await client.query('COMMIT');
+          await conn.commitTransaction();
         } else {
           throw transactionSet.error;
         }
         
       } catch (err) {
-        await client.query('ROLLBACK');
+        await conn.rollbackTransaction();
         throw err;
       }
-    }).rejects.toThrow();
-    
+    }).rejects.toThrow(); 
+  });
+
+  afterAll(() => {
+    const pool = DefaultPool.getInstance();
+
+    pool.end();
   });
 });

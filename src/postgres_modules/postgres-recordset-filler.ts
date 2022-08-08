@@ -1,23 +1,24 @@
 import { AbstractRecordsetFiller } from '../parent_modules/recordset-filler'
 import { Recordset } from '../parent_modules/recordset';
-import { DefaultPool } from './default-pool';
+import { PostgresConnection } from './postgres-connection';
 
 export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
-  private pool: DefaultPool;
+  //private pool: DefaultPool;
+  private conn: PostgresConnection;
   private _recordsets: Recordset<any>[] = [];
-  private _isPrivatePool = false;
+  private _isPrivateConn = false;
 
   constructor(recordset: Recordset<any>)
   constructor(recordsets: Recordset<any>[])
-  constructor(pool: DefaultPool, recordset: Recordset<any>)
-  constructor(pool: DefaultPool, recordsets: Recordset<any>[])
+  constructor(conn: PostgresConnection, recordset: Recordset<any>)
+  constructor(conn: PostgresConnection, recordsets: Recordset<any>[])
   constructor(arg1: any, arg2?: any) {
     super();
 
     if(arg2) {
       //引数が2つ渡されているとき
-      //第一引数:Pool, 第二引数:Recordset | Recorset[]
-      this.pool = arg1;
+      //第一引数:PostgresConnection, 第二引数:Recordset | Recorset[]
+      this.conn = arg1;
 
       if(Array.isArray(arg2)) {
         this._recordsets = arg2;
@@ -25,8 +26,8 @@ export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
         this._recordsets.push(arg2);
       }
     } else {
-      this.pool = new DefaultPool();
-      this._isPrivatePool = true;
+      this.conn = new PostgresConnection();
+      this._isPrivateConn = true;
 
       if(Array.isArray(arg1)) {
         this._recordsets = arg1;
@@ -38,7 +39,12 @@ export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
 
   async fill(): Promise<void> {
     try {
-      const client = await this.pool.connect();
+      //専用Conn時、接続する。
+      if (this._isPrivateConn) {
+        await this.conn.connect();
+      }
+      const client = this.conn.client;
+      
       await (async () => {
         const processes: Promise<void>[] = [];
         
@@ -59,16 +65,16 @@ export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
                 return resolve();
               });
             })
-          )  
+          );  
         });
 
         await Promise.all(processes);
       })().catch(err => {
         throw err;
-      }).finally(() => {
-        client.release();
-        if(this._isPrivatePool) {
-          this.pool.end();
+      }).finally(async () => {
+        //専用接続時、切断する。
+        if(this._isPrivateConn) {
+          this.conn.end();
         }
       });
     } catch(err) {

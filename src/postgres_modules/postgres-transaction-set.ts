@@ -1,4 +1,4 @@
-import { DefaultPool } from './default-pool';
+import { PostgresConnection } from './postgres-connection';
 import { AbstractTransactionSet, SQLCommand, SQLTransactionState, SQL_TRANSACTION_STATE } from '../parent_modules/transaction-set'
 import * as PG from 'pg';
 
@@ -7,17 +7,17 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
   private _state: SQLTransactionState = SQL_TRANSACTION_STATE.WaitingForExecute;
   
   private _error: any = null;
-  private client!: PG.PoolClient;
-  //専用poolフラグ
-  private isPrivatePGClient = true; //poolが当オブジェクトで生成したpool時True
+  private conn!: PostgresConnection;
+  //専用Connectionフラグ
+  private isPrivateConnection = true; //connが当クラス内で生成したPostgresConnectionの時Trueをセットする。
   //トランザクション処理フラグ
-  private isWithTransaction = true; //commit、rollback行うときtrue
+  private isWithTransaction = true; //commit、rollback行うときtrueをセットする。
   commands: SQLCommand[] = [];
 
   constructor(comannd: SQLCommand, isWithTransactoin?: boolean)
   constructor(commands: SQLCommand[], isWithTransaction?: boolean)
-  constructor(client: PG.PoolClient, comannd: SQLCommand, isWithTransaction?: boolean)
-  constructor(client: PG.PoolClient, commands: SQLCommand[], isWithTransaction?: boolean)
+  constructor(conn: PostgresConnection, commands: SQLCommand, isWithTransactoin?: boolean)
+  constructor(conn: PostgresConnection, commands: SQLCommand[], isWithTransactoin?: boolean)
   constructor(arg1: any, arg2: any, arg3?: any) {
     super();
 
@@ -25,8 +25,10 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
       //第一引数が単一のSQLCommandである。
       this.commands.push(arg1);
       
-      //専用clientである。
-      this.isPrivatePGClient = true;
+      //専用Connectionである。
+      this.isPrivateConnection = true;
+      //コネクションを生成する。
+      this.conn = new PostgresConnection();
 
       //トランザクションフラグ
       if (arg2 === undefined) {
@@ -38,8 +40,10 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
       //第一引数が配列→SQLCommandの配列である。
       this.commands.push(...(arg1 as SQLCommand[]));
       
-      //専用clientである。
-      this.isPrivatePGClient = true;
+      //専用Connectionである。
+      this.isPrivateConnection = true;
+      //コネクションを生成する。
+      this.conn = new PostgresConnection();
 
       if (arg2 === undefined) {
         this.isWithTransaction = true;
@@ -54,11 +58,11 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
         this.isWithTransaction = arg2;
       }
     } else {
-      //第一引数がPG.clientである。
-      this.client = arg1;
+      //第一引数がPostgresConnectionである。
+      this.conn = arg1;
 
-      //専用clientではない。
-      this.isPrivatePGClient = false;
+      //専用Connectionではない。
+      this.isPrivateConnection = false;
 
       //トランザクションフラグ(第3引数)
       if (arg3 === undefined) {
@@ -80,28 +84,27 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
   }
 
   async execute(): Promise<boolean> {
-    let pool: DefaultPool | null = null;
-
-    //専用クライアント時、dbに接続し、clientオブジェクトを取得する。
-    if(this.isPrivatePGClient){
-      pool = new DefaultPool();
-      this.client = await pool.connect();  
+    //専用クライアント時、ここでdbに接続する。
+    if(this.isPrivateConnection){
+      await this.conn.connect();
     }
     
+    const client = this.conn.client;
+
     //処理群
     const processes: (() => Promise<any>)[] = [];
 
     //トランザクションを伴う場合、トランザクション開始処理を処理群に追加する。
     if (this.isWithTransaction) {
       processes.push(() => {
-        return this.client.query('BEGIN');
+        return client.query('BEGIN');
       });
     }
 
     //実行するSQLCommand群の実行処理を処理群に追加する。
     processes.push(...this.commands.map(command => {
       return (async() => {
-        return this.client.query(command.source)
+        return client.query(command.source)
         .then(_ => {
           command.setState(SQL_TRANSACTION_STATE.Succeed);
         })
@@ -116,7 +119,7 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
     //トランザクションを伴う場合、コミット処理を処理群に追加する。
     if (this.isWithTransaction) {
       processes.push(() => {
-        return this.client.query('COMMIT');
+        return client.query('COMMIT');
       });
     }
     
@@ -133,17 +136,16 @@ export class PostgresTransactionSet extends AbstractTransactionSet {
     } catch (err) {
       //トランザクションを伴う場合、ロールバックする。
       if (this.isWithTransaction) {
-        await this.client.query('ROLLBACK');
+        await client.query('ROLLBACK');
       }
 
       //エラーを取得し、コマンド実行状態を失敗にする。
       this._error = new Error(err instanceof Error ? err.message : 'トランザクション処理中にエラーが発生しました。');
       this._state = SQL_TRANSACTION_STATE.Failed;
     } finally {
-      //専用クライアント時、クライアントをリリースし、当メソッドで生成したpoolを終了する。
-      if (this.isPrivatePGClient) {
-        this.client.release();
-        pool?.end();
+      //専用Connection時、当クラス内で生成したPostgresClientを終了する。
+      if (this.isPrivateConnection) {
+        await this.conn.end();
       }
     }
     

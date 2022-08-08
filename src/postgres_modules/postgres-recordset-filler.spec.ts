@@ -1,7 +1,7 @@
 import { Recordset } from '../parent_modules/recordset';
 import { PostgresRecordsetFiller } from '../index';
 import { config } from 'dotenv';
-import { DefaultPool } from '../index';
+import { PostgresConnection } from './postgres-connection';
 
 describe('RecordsetFillerのテスト', () => {
   //接続情報を取得する。
@@ -34,13 +34,15 @@ describe('RecordsetFillerのテスト', () => {
     const userName = '山田　太郎';
     const age = 39;
 
-    const pool = new DefaultPool();
-    
+    const conn = new PostgresConnection();
+    await conn.connect();
+
     const recordset = new Recordset<{ user_name: string, age: number}>(`select '${userName}' as user_name, ${age} as age`);
-    const filler = new PostgresRecordsetFiller(pool, recordset);
+    const filler = new PostgresRecordsetFiller(conn, recordset);
 
     await filler.fill();
-    await pool.end();
+    await conn.end();
+
     expect(recordset.records[0].user_name).toEqual(userName);
     expect(recordset.records[0].age).toEqual(age);
   });
