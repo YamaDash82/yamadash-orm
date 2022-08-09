@@ -1,16 +1,16 @@
 {
   "name": "yamadash-orm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "build/index.js",
   "files": [
     "build"
   ],
   "repository": {
-    "type": "git", 
+    "type": "git",
     "url": "https://github.com/YamaDash82/yamadash-orm.git"
   },
-  "private": true, 
+  "private": true,
   "scripts": {
     "test": "jest --watchAll -w=1",
     "build": "tsc",
