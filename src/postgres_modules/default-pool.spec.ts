@@ -6,7 +6,7 @@ describe('DefaultPoolクラスのテスト', () => {
   config();
 
   it('dbへの接続テスト', async () => {
-    const pool = new DefaultPool();
+    const pool = DefaultPool.getInstance();
 
     expect(pool).toBeDefined();
     

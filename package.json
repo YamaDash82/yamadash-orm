@@ -7,7 +7,8 @@
     "build"
   ],
   "repository": {
-    "type": "git"
+    "type": "git", 
+    "url": "https://github.com/YamaDash82/yamadash-orm.git"
   },
   "private": true, 
   "scripts": {
