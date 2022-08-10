@@ -57,6 +57,7 @@ export class PostgresRecordsetFiller extends AbstractRecordsetFiller {
             new Promise((resolve, reject) => {
               client.query(rst.source, (err, result) => {
                 if(err){
+                  rst.setError(err);
                   return reject(err);
                 }
 

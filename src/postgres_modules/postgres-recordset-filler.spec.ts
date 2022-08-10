@@ -1,7 +1,5 @@
-import { Recordset } from '../parent_modules/recordset';
-import { PostgresRecordsetFiller } from '../index';
+import { PostgresRecordsetFiller, PostgresConnection, Recordset } from '../index';
 import { config } from 'dotenv';
-import { PostgresConnection } from './postgres-connection';
 
 describe('RecordsetFillerのテスト', () => {
   //接続情報を取得する。

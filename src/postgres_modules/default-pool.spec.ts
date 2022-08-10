@@ -1,4 +1,4 @@
-import { DefaultPool } from './default-pool';
+import { DefaultPool } from '../index';
 import { config } from 'dotenv';
 
 describe('DefaultPoolクラスのテスト', () => {
@@ -30,5 +30,5 @@ describe('DefaultPoolクラスのテスト', () => {
 
     expect(connected).toEqual(true);
     expect(disconnected).toEqual(true);
-  });
+  }, 100000);
 });

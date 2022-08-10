@@ -1,8 +1,12 @@
 import { config } from 'dotenv';
-import { PostgresTransactionSet } from './postgres-transaction-set';
-import { SQLCommand, SQLTransactionState, SQL_TRANSACTION_STATE } from '../parent_modules/transaction-set';
-import { DefaultPool } from './default-pool';
-import { PostgresConnection } from './postgres-connection';
+import { 
+  PostgresTransactionSet, 
+  SQLCommand, 
+  SQLTransactionState, 
+  SQL_TRANSACTION_STATE, 
+  DefaultPool, 
+  PostgresConnection 
+} from '../index';
 
 describe('PostgresTransactionSetのテスト', () =>{
   //接続先dbにusersというテーブルがあるものとしてテスト。

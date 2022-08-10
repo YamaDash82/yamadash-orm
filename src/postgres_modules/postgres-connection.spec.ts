@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
-import { DefaultPool } from './default-pool';
-import { PostgresConnection } from './postgres-connection';
+import { PostgresConnection } from '../index';
 
 describe('PostgresConnectionクラスのテスト', () => {
   //環境変数を取得する。
