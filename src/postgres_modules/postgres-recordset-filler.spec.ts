@@ -44,4 +44,21 @@ describe('RecordsetFillerのテスト', () => {
     expect(recordset.records[0].user_name).toEqual(userName);
     expect(recordset.records[0].age).toEqual(age);
   });
+
+  it(`誤ったSQL文を指定。errorが格納されるかテストする。`, async () => {
+    //FROMを誤ってFRMと記述した。
+    const rst = new Recordset (`SELECT * FRM users`);
+    
+    const filler = new PostgresRecordsetFiller(rst);
+    try {
+      await filler.fill();
+    } catch(err) {
+      console.log(`エラー内容:${err}`)
+      //スローされたエラーと、rstに格納されているエラーが同じである。
+      expect(rst.error === err).toBe(true);
+    }
+
+    expect(rst.hasError).toBe(true);
+    expect(rst.error).toBeTruthy();
+  });
 });

@@ -5,6 +5,7 @@ export class DefaultPool extends PG.Pool {
   
   //シングルトンクラスにする。
   private constructor() {
+    console.log(`${process.env.DATABASE_URL}`);
     super({
       //接続先URLは環境変数からもたらされる。
       //開発時は".env"ファイルから、本番環境時(heroku)はherokuから値がもたらされる。
