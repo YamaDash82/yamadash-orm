@@ -1,5 +1,5 @@
 {
-  "name": "yamadash-orm",
+  "name": "@YamaDash82/yamadash-orm",
   "version": "1.0.2",
   "description": "",
   "main": "build/index.js",
@@ -37,5 +37,8 @@
     "dotenv": "^16.0.1",
     "pg": "^8.7.3",
     "tedious": "^14.5.0"
+  }, 
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   }
 }
